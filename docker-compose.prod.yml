@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env.prod
+    ports:
+      - "8001:8001"
+    networks:
+      - stad_network
+
+
+  casino-poker-celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: celery -A main.celery worker --loglevel=info
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env.prod
+    depends_on:
+      - web
+    networks:
+      - stad_network
+
+
+#  rabbitmq-service:
+#    hostname: rabbit
+#    image: "rabbitmq:3-management"
+#    environment:
+#      - RABBITMQ_DEFAULT_USER=casino_poker_user
+#      - RABBITMQ_DEFAULT_PASS=KEp9zycEvuEW5VGysCz8MB2R
+#    ports:
+#      - "15672:15672"
+#      - "5672:5672"
+#    networks:
+#      - stad_network
+
+#  mongo_db:
+#    image: mongo:5.0.2
+#    restart: always
+#    ports:
+#      - "27017:27017"
+#    networks:
+#      - stad_network
+#    volumes:
+#      - mongodb_data_container:/data/db
+#
+#  game_redis:
+#    image: redis
+#    restart: always
+#    networks:
+#      - stad_network
+
+#  rabbitmq:
+#    hostname: rabbit
+#    image: "rabbitmq:3-management"
+#    environment:
+#      - RABBITMQ_DEFAULT_USER=guest
+#      - RABBITMQ_DEFAULT_PASS=guest
+#    logging:
+#      driver: none
+#    ports:
+#      - "15672:15672"
+#      - "5672:5672"
+#
+#  worker:
+#    build: './backend/worker'
+#    user: nobody
+#    depends_on:
+#      - rabbitmq
+#    networks:
+#      - stad_network
+
+
+networks:
+  stad_network:
+    external:
+      name: mima_network
+
+
+volumes:
+  mongodb_data_container:

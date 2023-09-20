@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  blackjack-backend-service:
+    build: ./
+    command: uvicorn main:app --reload --workers 1 --host 0.0.0.0 --port 8005
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env.test
+    ports:
+    - "8005:8005"
+    depends_on:
+      - blackjack-mongodb-service
+      - blackjack-celery-worker
+
+  blackjack-mongodb-service:
+    image: mongo:5.0.2
+    ports:
+      - "27019:27017"
+    logging:
+      driver: none
+
+  blackjack-redis-service:
+    image: redis
+    restart: always
+    ports:
+      - "6380:6379"
+
+  blackjack-celery-worker:
+    build: ./
+    command: celery -A main.celery worker --loglevel=info
+    env_file:
+      - .env.test
+    depends_on:
+      - blackjack-mongodb-service
+      - blackjack-redis-service
+      - blackjack-rabbitmq
+
+  blackjack-rabbitmq:
+    hostname: rabbit
+    image: "rabbitmq:3-management"
+    environment:
+      - RABBITMQ_DEFAULT_USER=blackjack_user
+      - RABBITMQ_DEFAULT_PASS=KEp9zycEvuEW5VGysCz8MB2R
+    ports:
+      - "15672:15672"
+      - "5672:5672"
